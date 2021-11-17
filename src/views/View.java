@@ -15,51 +15,51 @@ public class View {
 	/* 데이터의 흐름 제어 */
 	private void ctlView() {
 		FrontController fc = null;
-		String title, message = "", jobCode = "";
+		String title, message = "", request = "";
 		int menuCode = -1, subCode;
 		String[][] menu = saveMenu();
 		title = this.makeTitle();
 		String[] userData;
 		fc = new FrontController();
-		//String message2 = "";
+		// String message2 = "";
 		while (true) {
 
-			if (jobCode.equals("")) {
+			if (request.equals("")) {
 				if (menuCode != 4) {
 					menuCode = this.ctlMain(title, message, menu);
-					message="";
+					message = "";
 				}
 				if (menuCode == 0) {
 					break;
 				} else {
-					message=(menuCode==4)?message:"";
+					message = (menuCode == 4) ? message : "";
 				}
 				if (menuCode != 4) {
 					subCode = this.ctlSub(title, message, menu[menuCode - 1]);
 					if (subCode != 0) {
-						jobCode = menuCode + "" + subCode;
+						request = menuCode + "" + subCode;
 						message = "";
 						/* 서버 서비스 요청 */
-						if(jobCode.equals("13")) {
-							String[] userDate={this.getDate("yyyyMM")};
-							message=fc.getRequest(jobCode, userDate);
-
-						}else if(jobCode.equals("14")){
+						if (request.equals("13")) {
+							request += "?" + this.getDate("yyyyMM");
+							message = fc.getRequest(request);
+							request = request.substring(0, request.indexOf("?"));
+						} else if (request.equals("14")) {
 							this.display("시작일입력(yyyyMMdd) : ");
 							String m1 = this.menuInput();
 							this.display("마감일입력(yyyyMMdd) : ");
 							String m2 = this.menuInput();
-							String[] userDate={m1,m2};
-							message=fc.getRequest(jobCode, userDate);
-						}else {
-							message = fc.getRequest(jobCode);
+							request += "?" + m1 + "&" + m2;
+							message = fc.getRequest(request);
+							request = request.substring(0, request.indexOf("?"));
+						} else {
+							message = fc.getRequest(request);
 						}
 					} else {
 						message = "요청이 취소되었습니다.";
 					}
 
 				} else {
-					String[] finalOder = null;
 					String[][] orders = new String[100][];
 					int recordIndex = -1;
 					boolean posDispCheck = true;
@@ -69,106 +69,137 @@ public class View {
 						recordIndex++;
 						// 판매화면 이동
 						pos = this.posDisplay(title, orders, posDispCheck, message);
-						if (pos.toUpperCase().equals("Y") || pos.toUpperCase().equals("N"))
+						if (!pos.equals("0")) {
+							if (pos.toUpperCase().equals("Y") || pos.toUpperCase().equals("N"))
+								break;
+							// 서버에 상품코드 전달 후 상품정보 받기
+							// 상품검색 - 4S    
+							// jobCode = 4S   검색코드 - 1차원배열에 저장
+							request = "4S";
+							request += "?" + pos;
+							// 서버에 상품코드 전달 후 상품정보(1001,(HOT)아메리카노,2500,1,10) 받기
+							String[] oder = fc.getRequest(request).split(",");
+							posDispCheck = false;
+							orders[recordIndex] = oder;
+							/* request에 jobCode만 담기 */
+							request=request.substring(0, request.indexOf("?"));
+						} else {
+							request = "";
+							menuCode = -1;
+							message="";
 							break;
-
-						jobCode = "4S";
-						String[] search = { pos };
-						// 서버에 상품코드 전달 후 상품정보(1001,(HOT)아메리카노,2500,1,10) 받기
-						String[] oder = fc.getRequest("4S", search).split(",");
-						posDispCheck = false;
-						orders[recordIndex] = oder;
+						}
 					}
 					if (pos.toUpperCase().equals("Y")) {
 
-						jobCode = "4D";
+						request = "4D";
 						// finalOrder에 할당
-						finalOder = new String[recordIndex];
+
 						/* 포인트 적립 여부 */
 						this.display(" ----------- 포인트를 적립하시겠습니까?(y/n)");
 						if (this.menuInput().toUpperCase().equals("Y")) {
 							this.display(" ----------- 회원코드 입력 : ");
 							memberCode = this.menuInput();
 						}
-						// orders >> finalOder 할당
-						for (int i = 0; i < finalOder.length; i++) {
-							finalOder[i] = orders[i][0] + "," + orders[i][1] + "," + orders[i][2] + "," + orders[i][3]
-									+ "," + orders[i][4] + ((memberCode == null) ? "" : "," + memberCode);
+						// orders >> request 할당
+						for (int i = 0; i < recordIndex; i++) {
+							request += ((i == 0) ? "?" : "&") + orders[i][0] + "&" + orders[i][3];
 							// 주문데이터 전송
 						}
-						message = fc.getRequest(jobCode, finalOder);
-						jobCode = "";
+						request += ((memberCode == null) ? "" : "&" + memberCode);
+						message = fc.getRequest(request);
+						request = "";
 						menuCode = 4;
 
 					} else {
-						jobCode = "";
+						request = "";
+						if(!pos.equals("0")) {
 						menuCode = 4;
+						}
 					}
 				}
 			} else {
 
-				if (jobCode.equals("21")) {
+				if (request.equals("21")) {
 					userData = this.regMenu(title, message);
 					if (userData != null) {
-						jobCode = "2R";
-						message = fc.getRequest(jobCode, userData);
-						jobCode = "21";
+						request = "2R" + "?";
+						for (int i = 0; i < userData.length; i++) {
+							request += (i == 0) ? userData[i] : "&" + userData[i];
+						}
+						message = fc.getRequest(request);
+						request = "21";
 					} else {
-						jobCode = "";
+						request = "";
 						message = "";
 					}
-				} else if (jobCode.equals("31")) {
+				} else if (request.equals("31")) {
 					userData = this.ctlRegMember(title, message);
 					if (userData != null) {
-						jobCode = "3R";
-						message = fc.getRequest(jobCode, userData);
-						jobCode = "31";
+						request = "3R" + "?";
+						for (int i = 0; i < userData.length; i++) {
+							request += (i == 0) ? userData[i] : "&" + userData[i];
+						}
+						message = fc.getRequest(request);
+						request = "31";
 					} else {
-						jobCode = "";
+						request = "";
 						message = "";
 					}
-				} else if (jobCode.equals("22")) {
+				} else if (request.equals("22")) {
 					/* 메뉴 수정 */
 					userData = this.ctlModMenu(title, message);
 					if (userData != null) {
-						jobCode = "2M";
-						message = fc.getRequest(jobCode, userData);
-						jobCode = "22";
+						request = "2M" + "?";
+						for (int i = 0; i < userData.length; i++) {
+							request += (i == 0) ? userData[i] : "&" + userData[i];
+						}
+						message = fc.getRequest(request);
+						request = "22";
 					}
-				} else if (jobCode.equals("23")) {
+				} else if (request.equals("23")) {
 					/* 메뉴 삭제 */
 					userData = this.ctlDelMenu(title, message);
 					if (userData != null) {
-						jobCode = "2D";
-						message = fc.getRequest(jobCode, userData);
-						jobCode = "23";
+						request = "2D" + "?";
+						for (int i = 0; i < userData.length; i++) {
+							request += (i == 0) ? userData[i] : "&" + userData[i];
+						}
+						message = fc.getRequest(request);
+						request = "23";
 					}
-				} else if (jobCode.equals("32")) {
+				} else if (request.equals("32")) {
 					/* 회원 수정 */
 					userData = this.ctlModMember(title, message);
 					if (userData != null) {
-						jobCode = "3M";
-						message = fc.getRequest(jobCode, userData);
-						jobCode = "32";
+						request = "3M" + "?";
+						for (int i = 0; i < userData.length; i++) {
+							request += (i == 0) ? userData[i] : "&" + userData[i];
+						}
+						message = fc.getRequest(request);
+						request = "32";
 					}
-				} else if (jobCode.equals("33")) {
+				} else if (request.equals("33")) {
 					/* 회원 삭제 */
 					userData = this.ctlDelMember(title, message);
 					if (userData != null) {
-						jobCode = "3D";
-						message = fc.getRequest(jobCode, userData);
-						jobCode = "33";
+						request = "3D" + "?";
+						for (int i = 0; i < userData.length; i++) {
+							request += (i == 0) ? userData[i] : "&" + userData[i];
+						}
+						message = fc.getRequest(request);
+						request = "33";
 					}
-				}else if(jobCode.equals("13")) {
+				} else if (request.equals("13")) {
 
 					this.stat(title, message);
-					jobCode="";
-					message="";
-				}else if(jobCode.equals("14")) {
+					request = "";
+					message = "";
+				} else if (request.equals("14")) {
 
 					this.stat2(title, message);
-					jobCode="";
-					message="";
+					request = "";
+					message = "";
 				}
 			}
 		}
@@ -198,9 +229,10 @@ public class View {
 
 	private String getDate(String condition) {
 		SimpleDateFormat sdf = new SimpleDateFormat(condition);
-		Date d=new Date();
-		return sdf.format(d);		
+		Date d = new Date();
+		return sdf.format(d);
 	}
+
 	private int countRecord(String[][] orders) {
 		int i;
 		for (i = 0; i < orders.length; i++) {
@@ -219,7 +251,7 @@ public class View {
 		while (true) {
 			if (check) {
 				this.display(title);
-				//this.display(message2);
+				// this.display(message2);
 				// orders !=null >> message 출력 >> 장바구니(1)
 				if (message.length() == 0) {
 					if (orders[0] != null) {
@@ -236,7 +268,7 @@ public class View {
 						this.display("   " + (recordIndex + 1) + "\t" + orders[recordIndex][0] + "\t "
 								+ orders[recordIndex][1] + ((orders[recordIndex][1].length() >= 6) ? "\t  " : "\t\t  ")
 								+ orders[recordIndex][2] + "\t" + orders[recordIndex][3] + "\t" + orders[recordIndex][4]
-										+ "%\n");
+								+ "%\n");
 					}
 
 					this.display(" --------------------------------------------------\n");

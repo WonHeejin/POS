@@ -15,49 +15,29 @@ public class FrontController {
 	
 	public FrontController() {}
 	
-	public String getRequest(String jobCode) {
+	public String getRequest(String requestData) {
 		
-		switch(jobCode.charAt(0)) {
+		switch(requestData.charAt(0)) {
 		case '1':
 			sm = new StoreManagement();
-			message = sm.backController(jobCode);
+			message = sm.backController(requestData);
 			break;
 		case '2':
 			mm = new MenuManagement();
-			message = mm.backController(jobCode);
+			message = mm.backController(requestData);
 			break;
 		case '3':
 			member = new MemberManagement();
-			message = member.backController(jobCode);
-			break;
-		}
-		return message;
-	}
-	
-	public String getRequest(String jobCode, String[] data) {
-		
-		switch(jobCode.charAt(0)) {
-		case '1':
-			sm = new StoreManagement();
-			message = sm.backController(jobCode, data);
-			
-			break;
-		case '2':
-			mm = new MenuManagement();
-			message = mm.backController(jobCode, data);
-			break;
-		case '3':
-			member = new MemberManagement();
-			message = member.backController(jobCode, data);
+			message = member.backController(requestData);
 			break;
 		case '4':
 			sales=new SalesManagement();
-			message = sales.backController(jobCode, data);
-		}
-		
+			message = sales.backController(requestData);
+		}	
 		return message;
 	}
-}
+}	
+	
 
 /* switch(데이터){
  * case 비교값:
