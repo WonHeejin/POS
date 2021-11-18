@@ -7,27 +7,36 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
+
+import beans.MenuBean;
+import beans.OrderBean;
 
 public class DataAccessObject {
 
 	public DataAccessObject() {
 
 	}
-	boolean setOrders(String[] order) {
+	boolean setOrders(ArrayList<OrderBean> list) {
 		boolean check= false;
 		File file = new File("D:\\Class\\HEEJIN\\sample\\src\\datafile\\orders.txt");
 		FileWriter writer = null;
 		BufferedWriter buffer = null;
-
+		StringBuffer sb=new StringBuffer();
 		try {
 			writer = new FileWriter(file, true);
 			buffer = new BufferedWriter(writer);
 
-			for(int colIndex=0; colIndex<order.length; colIndex++) {
-				buffer.write(order[colIndex]);
-				buffer.newLine();
+			for(int colIndex=0; colIndex<list.size(); colIndex++) {
+				sb.append(list.get(colIndex).getOrderCode());
+				sb.append(","+list.get(colIndex).getGoodsCode());
+				sb.append(","+list.get(colIndex).getOrderQuantity());
+				if(list.get(colIndex).getMemberCode()!=null){
+					sb.append(","+list.get(colIndex).getMemberCode());
+				}
+				sb.append("\n");
 			}
-			
+			buffer.write(sb.toString());
 			check = true;
 		}catch(IOException e) {
 
@@ -51,7 +60,7 @@ public class DataAccessObject {
 				if(Integer.parseInt(month[0])<=Integer.parseInt(line.substring(0,8))&&Integer.parseInt(line.substring(0,8))<=Integer.parseInt(month[1])) {
 					index++;
 					salesMonthStat[index] = line.split(",");
-					//System.out.println(salesMonthStat[0][0]);
+				
 					
 				}
 			}
@@ -128,15 +137,22 @@ public class DataAccessObject {
 		
 		return SalesMonthStat;
 	}
-	String[] getGoodsInfo(String goodsCode) {
-		String[] goodsInfo=null;
+	OrderBean getGoodsInfo(OrderBean ob) {
 		BufferedReader buffer=null;
+		OrderBean goodsInfo=new OrderBean();
 		try {
 			buffer = new BufferedReader(new FileReader("D:\\Class\\HEEJIN\\sample\\src\\datafile\\goodsInfo.txt"));
 			String line;
 			while((line=buffer.readLine())!=null){
-				goodsInfo=line.split("\\|");
-				if(goodsCode.equals(goodsInfo[0])) {break;}
+				String[] record=line.split("\\|");
+				if(ob.getGoodsCode().equals(record[0])) {
+					//상품코드 상품명 가격 수량 할인율
+					goodsInfo.setGoodsCode(record[0]);
+					goodsInfo.setGoodsName(record[1]);
+					goodsInfo.setGoodsPrice(Integer.parseInt(record[2]));
+					goodsInfo.setOrderQuantity(0);
+					goodsInfo.setDiscountRate(Integer.parseInt(record[5]));
+					break;}
 			}
 		} catch (FileNotFoundException e1) {
 			e1.printStackTrace();
@@ -182,23 +198,48 @@ public class DataAccessObject {
 		}
 		return count;
 	}
-
-	boolean setMenu(String[] data) {
+			//메뉴 수정, 삭제
+	boolean setMenu(ArrayList<MenuBean> list) {
 		boolean check = false;
-		File file = new File("D:\\Class\\HEEJIN\\sample\\src\\datafile\\goodsInfo.txt");
-		FileWriter writer = null;
 		BufferedWriter buffer = null;
+		StringBuffer sb=new StringBuffer();
 
-		try {
-			writer = new FileWriter(file, true);
-			buffer = new BufferedWriter(writer);
+		for(int colIndex=0; colIndex<list.size(); colIndex++) {
+			sb.append(list.get(colIndex).getMenuCode());
+			sb.append("|"+list.get(colIndex).getMenuName());
+			sb.append("|"+list.get(colIndex).getMenuPrice());
+			sb.append("|"+list.get(colIndex).getMenuState());
+			sb.append("|"+list.get(colIndex).getMenuCat());
+			sb.append("|"+list.get(colIndex).getMenuDiscount()+"\n");
+		}
+		
+		try {			
+			buffer = new BufferedWriter(new FileWriter(new File("D:\\Class\\HEEJIN\\sample\\src\\datafile\\goodsInfo.txt")));			
+			buffer.write(sb.toString());			
+			check = true;
+		}catch(IOException e) {
 
-			for(int colIndex=0; colIndex<data.length; colIndex++) {
-				buffer.write(data[colIndex]);
-				if(colIndex != data.length-1) {
-					buffer.write("|");
-				}
-			}
+		} 
+		finally {
+			try {buffer.close();} catch (IOException e) {}
+		}
+
+		return check;
+	}
+	//메뉴 등록
+	boolean setMenu(MenuBean menu) {
+		boolean check = false;
+		BufferedWriter buffer = null;
+		StringBuffer sb=new StringBuffer();
+		sb.append(menu.getMenuCode()+"|");
+		sb.append(menu.getMenuName()+"|");
+		sb.append(menu.getMenuPrice()+"|");
+		sb.append(menu.getMenuState()+"|");
+		sb.append(menu.getMenuCat()+"|");
+		sb.append(menu.getMenuDiscount());
+		try {			
+			buffer = new BufferedWriter(new FileWriter(new File("D:\\Class\\HEEJIN\\sample\\src\\datafile\\goodsInfo.txt"), true));						
+			buffer.write(sb.toString());
 			buffer.newLine();
 			check = true;
 		}catch(IOException e) {
@@ -210,50 +251,28 @@ public class DataAccessObject {
 
 		return check;
 	}
-	
-	boolean setMenu(String[][] data) {
-		boolean check = false;
-		File file = new File("D:\\Class\\HEEJIN\\sample\\src\\datafile\\goodsInfo.txt");
-		FileWriter writer = null;
-		BufferedWriter buffer = null;
-		StringBuffer sb=new StringBuffer();
-		try {
-			writer = new FileWriter(file);
-			buffer = new BufferedWriter(writer);
-			
-			for(int i=0;i<data.length;i++) {
-				for(int f=0;f<data[0].length;f++) {
-					sb.append(data[i][f]);
-					sb.append((f!=data[i].length-1)?"|":"\n");
-				}
-			}
-			buffer.write(sb.toString());
-			check = true;
-		}catch(IOException e) {
 
-		} 
-		finally {
-			try {buffer.close();} catch (IOException e) {}
-		}
-
-		return check;
-	}
-
-	String[][] getMenu(){
-		String[][] menuList = new String[this.countRecord("D:\\Class\\HEEJIN\\sample\\src\\datafile\\goodsInfo.txt")][];
+	ArrayList<MenuBean> getMenu(){
+		ArrayList menuList= new ArrayList<MenuBean>();
 		String menu = null;
-		String[] menuInfo = null;
-
-		int index = -1;
-		File file = new File("D:\\Class\\HEEJIN\\sample\\src\\datafile\\goodsInfo.txt");
-		try {
-			FileReader reader = new FileReader(file);
-			BufferedReader buffer = new BufferedReader(reader);
+		MenuBean menuInfo = null;
+		String[] menuRead;	
+		
+		try {			
+			BufferedReader buffer = new BufferedReader(new FileReader("D:\\Class\\HEEJIN\\sample\\src\\datafile\\goodsInfo.txt"));
 			//1001|아메리카노|2000|1|HOT|10
-			while((menu = buffer.readLine()) != null) {
-				index++;
-				menuInfo = menu.split("\\|");
-				menuList[index] = menuInfo;
+			while((menu = buffer.readLine()) != null) {	
+				menuInfo=new MenuBean();
+				
+				menuRead = menu.split("\\|");
+				menuInfo.setMenuCode(menuRead[0]);
+				menuInfo.setMenuName(menuRead[1]);
+				menuInfo.setMenuPrice(Integer.parseInt(menuRead[2]));
+				menuInfo.setMenuState(menuRead[3].charAt(0));
+				menuInfo.setMenuCat(menuRead[4]);
+				menuInfo.setMenuDiscount(Integer.parseInt(menuRead[5]));
+				
+				menuList.add(menuInfo);
 			}
 			buffer.close();
 		}catch (IOException e) {

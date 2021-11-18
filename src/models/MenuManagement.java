@@ -1,5 +1,9 @@
 package models;
 
+import java.util.ArrayList;
+
+import beans.MenuBean;
+
 public class MenuManagement {
 	private DataAccessObject dao;
 
@@ -7,11 +11,44 @@ public class MenuManagement {
 
 	}
 
-	public String backController(String jobCode) {
+	public String backController(String request) {
 		String message = null;
+		String jobCode;
+		String[] data;
+		MenuBean menu=null;
+		if(request.indexOf('?')!=-1) {
+			jobCode=request.substring(0, request.indexOf('?'));
+			data=request.substring(request.indexOf('?')+1).split("&");
+			if(data.length>0) {
+				menu=new MenuBean();
+				menu.setMenuCode(data[0]);
+				if(jobCode.equals("2R")) {
+					menu.setMenuName(data[1]);
+					menu.setMenuPrice(Integer.parseInt(data[2]));
+					menu.setMenuState(data[3].charAt(0));
+					menu.setMenuCat(data[4]);
+					menu.setMenuDiscount(Integer.parseInt(data[5]));
+				}else if(jobCode.equals("2M")) {
+					menu.setMenuPrice(Integer.parseInt(data[1]));
+					menu.setMenuDiscount(Integer.parseInt(data[2]));
+				}
+			}						
+		}else {
+			jobCode=request;
+		}
+		
 		switch(jobCode) {
 		case "21": case "22": case "23":
 			message = this.ctlReadMenu();
+			break;
+		case "2R":
+			message = this.ctlRegMenu(menu);
+			break;
+		case "2M":
+			message = this.ctlModMenu(menu);
+			break;
+		case "2D":
+			message = this.ctlDelMenu(menu);
 			break;
 		case "24":
 			this.ctlRegGoods();
@@ -26,22 +63,7 @@ public class MenuManagement {
 		return message;
 	}
 
-	public String backController(String jobCode, String[] data) {
-		String message = null;
-		
-		switch(jobCode) {
-		case "2R":
-			message = this.ctlRegMenu(data);
-			break;
-		case "2M":
-			message = this.ctlModMenu(data);
-			break;
-		case "2D":
-			message = this.ctlDelMenu(data);
-			break;
-		}
-		return message;
-	}
+	
 	
 	
 	/* 메뉴읽기 */
@@ -53,36 +75,34 @@ public class MenuManagement {
 	}
 	
 	/* 2차원 배열 --> String */
-	private String toStringFromArray(String[][] menuList) {
-		StringBuffer sb = new StringBuffer();
-		
-		for(int recordIndex=0; recordIndex<menuList.length; recordIndex++) {
+	private String toStringFromArray(ArrayList<MenuBean> menulist) {
+		StringBuffer sb = new StringBuffer();		
+		for(int recordIndex=0; recordIndex<menulist.size(); recordIndex++) {
 			sb.append(" ");
-			for(int colIndex=0; colIndex<menuList[recordIndex].length; colIndex++) {
-				if(colIndex == 3) {
-					sb.append(menuList[recordIndex][colIndex].equals("1")? "가능": "불가");
-				}else {
-					sb.append(menuList[recordIndex][colIndex]);
-				}
-
-				if(colIndex != menuList[recordIndex].length - 1) {
-					sb.append("\t");
-					if(colIndex == 1 && menuList[recordIndex][colIndex].length()<6) {
-						sb.append("\t");
-					}
-				}
-			}
+			sb.append(menulist.get(recordIndex).getMenuCode());
+			sb.append("\t");
+			sb.append(menulist.get(recordIndex).getMenuName());
+			sb.append(menulist.get(recordIndex).getMenuName().length()<6?"\t\t":"\t");
+			sb.append(menulist.get(recordIndex).getMenuPrice());
+			sb.append("\t");
+			sb.append(menulist.get(recordIndex).getMenuState()=='1'?"판매가능":"판매불가");
+			sb.append("\t");
+			sb.append(menulist.get(recordIndex).getMenuCat());
+			sb.append("\t");
+			sb.append(menulist.get(recordIndex).getMenuDiscount());
 			sb.append("\n");
 		}
 		return sb.toString();
 	}
+
+		
 	
 	/* 메뉴등록 */
-	private String ctlRegMenu(String[] menuData) {
+	private String ctlRegMenu(MenuBean menu) {
 		String menuList = null;
 		dao = new DataAccessObject();
 		// DAO에 메뉴등록 요청
-		if(dao.setMenu(menuData)) {
+		if(dao.setMenu(menu)) {
 			// DAO에 등록된 메뉴 읽기 요청
 			menuList = this.toStringFromArray(dao.getMenu());
 		}else {
@@ -94,13 +114,14 @@ public class MenuManagement {
 	}
 	
 	/* 메뉴수정 */
-	private String ctlModMenu(String[] data) {
+	private String ctlModMenu(MenuBean menu) {
 		dao = new DataAccessObject();
-		String[][] list=dao.getMenu();
-		for(int i=0;i<list.length;i++) {
-			if(list[i][0].equals(data[0])){
-				list[i][2]=data[1];
-				list[i][5]=data[2];
+		ArrayList<MenuBean> list=dao.getMenu();
+		for(int i=0;i<list.size();i++) {
+			if(list.get(i).getMenuCode().equals(menu.getMenuCode())){
+				list.get(i).setMenuPrice(menu.getMenuPrice());
+				list.get(i).setMenuDiscount(menu.getMenuDiscount());
+				
 				break;
 			}
 		}
@@ -109,22 +130,15 @@ public class MenuManagement {
 	}
 
 	/* 메뉴삭제 */
-	private String ctlDelMenu(String[] data) {
+	private String ctlDelMenu(MenuBean menu) {
 		dao = new DataAccessObject();
-		String[][] list=dao.getMenu();
-		String[][] newList= new String [list.length-1][list[0].length];
-		boolean check=true;
-		for(int i=0;i<list.length;i++) {
-			if(!list[i][0].equals(data[0])) {
-//				if(check) {
-//					newList[i]=list[i];
-//				}else {
-//					newList[i-1]=list[i];
-//				}
-				newList[(check)?i:i-1]=list[i];
-			}else {check=false;}
-		}	
-		 return (dao.setMenu(newList))?this.toStringFromArray(dao.getMenu()):"메뉴삭제에 실패했습니다. 다시 입력해주세요.";
+		ArrayList<MenuBean> list=dao.getMenu();
+		for(int i=0; i<list.size();i++) {
+			if(list.get(i).getMenuCode().equals(menu.getMenuCode())) {
+				list.remove(i);
+			}
+		}
+		 return (dao.setMenu(list))?this.toStringFromArray(dao.getMenu()):"메뉴삭제에 실패했습니다. 다시 입력해주세요.";
 	}
 
 	/* 굿즈등록 */
