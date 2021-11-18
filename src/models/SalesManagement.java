@@ -59,29 +59,27 @@ public class SalesManagement {
 		return sdf.format(d);		 
 	}
 	/* 주문 처리*/
-	private String ctlOrder(ArrayList orders) {	
+	private String ctlOrder(ArrayList<OrderBean> orders) {	
 		dao=new DataAccessObject();
 		String date= now();
 		for(int recordIndex=0;recordIndex<orders.size();recordIndex++) {
-			((OrderBean)orders.get(recordIndex)).setOrderCode(date);
+			(orders.get(recordIndex)).setOrderCode(date);
 		}
-		String[] daoOrders= new String[orders.size()];
-
-		
-		for(int i=0;i<daoOrders.length;i++) {
-			daoOrders[i]=((OrderBean)orders.get(i)).getOrderCode()+
-			","+((OrderBean)orders.get(i)).getGoodsCode()+
-			","+((OrderBean)orders.get(i)).getOrderQuantity()+
-			(((OrderBean)orders.get(i)).getMemberCode()!=null?","+((OrderBean)orders.get(i)).getMemberCode():"");
-		}
-		return (dao.setOrders(daoOrders))?"주문이 완료되었습니다.":"주문에 실패하였습니다.";				 
+				return (dao.setOrders(orders))?"주문이 완료되었습니다.":"주문에 실패하였습니다.";				 
 	}
 	/* 판매개시 */
-	private String ctlSales(ArrayList orders) {
+	private String ctlSales(ArrayList<OrderBean> orders) {
 		dao= new DataAccessObject(); 
-		String goodsInfo;
-		String[] rawData=dao.getGoodsInfo(((OrderBean)orders.get(0)).getGoodsCode());
-		goodsInfo=rawData[0]+ ","+rawData[1]+","+rawData[2]+","+"0"+","+rawData[5];
-		 return goodsInfo;		
+		OrderBean ob= null;
+		StringBuffer sb= new StringBuffer();
+		ob=dao.getGoodsInfo(orders.get(0));
+		
+		sb.append(ob.getGoodsCode());
+		sb.append(","+ob.getGoodsName());
+		sb.append(","+ob.getGoodsPrice());
+		sb.append(","+ob.getOrderQuantity());
+		sb.append(","+ob.getDiscountRate());
+		
+		 return sb.toString();		
 	}
 }
