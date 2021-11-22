@@ -26,6 +26,7 @@ public class View {
 
 			if (request.equals("")) {
 				if (menuCode != 4) {
+					
 					menuCode = this.ctlMain(title, message, menu);
 					message = "";
 				}
@@ -54,6 +55,7 @@ public class View {
 							request = request.substring(0, request.indexOf("?"));
 						} else {
 							message = fc.getRequest(request);
+							
 						}
 					} else {
 						message = "요청이 취소되었습니다.";
@@ -115,12 +117,13 @@ public class View {
 						request = "";
 						if(!pos.equals("0")) {
 						menuCode = 4;
+						message="";
 						}
 					}
 				}
 			} else {
-
-				if (request.equals("21")) {
+				
+				 if (request.equals("21")) {
 					userData = this.regMenu(title, message);
 					if (userData != null) {
 						request = "2R" + "?";
@@ -156,6 +159,9 @@ public class View {
 						}
 						message = fc.getRequest(request);
 						request = "22";
+					}else {
+						request = "";
+						message = "";
 					}
 				} else if (request.equals("23")) {
 					/* 메뉴 삭제 */
@@ -167,6 +173,9 @@ public class View {
 						}
 						message = fc.getRequest(request);
 						request = "23";
+					}else {
+						request = "";
+						message = "";
 					}
 				} else if (request.equals("32")) {
 					/* 회원 수정 */
@@ -178,6 +187,9 @@ public class View {
 						}
 						message = fc.getRequest(request);
 						request = "32";
+					}else {
+						request = "";
+						message = "";
 					}
 				} else if (request.equals("33")) {
 					/* 회원 삭제 */
@@ -189,6 +201,9 @@ public class View {
 						}
 						message = fc.getRequest(request);
 						request = "33";
+					}else {
+						request = "";
+						message = "";
 					}
 				} else if (request.equals("13")) {
 
@@ -200,6 +215,8 @@ public class View {
 					this.stat2(title, message);
 					request = "";
 					message = "";
+				}else {
+					request="";
 				}
 			}
 		}
@@ -259,8 +276,8 @@ public class View {
 					}
 				} else {
 					this.display("   " + message + "\n");
+					
 				}
-
 				if (countOrders > 0) {
 					this.display(
 							" --------------------------------------------------\n    순번     코드          상품        가격   수량   할인율\n   --------------------------------------------------\n");
@@ -295,6 +312,7 @@ public class View {
 				this.display("  ____________________________________ ADD?(Y/N):");
 				code = this.menuInput().toUpperCase();
 				check = true;
+				message="";
 			}
 		}
 		// ctlView >> orders
@@ -329,6 +347,8 @@ public class View {
 			modMenu[1] = this.menuInput();
 			this.display("할인율\t:");
 			modMenu[2] = this.menuInput();
+		}else {
+			modMenu=null;
 		}
 		return modMenu;
 	}
@@ -356,6 +376,8 @@ public class View {
 			delMenu = new String[1];
 			this.display("메뉴코드\t:");
 			delMenu[0] = this.menuInput();
+		}else {
+			delMenu=null;
 		}
 		return delMenu;
 	}
@@ -388,6 +410,8 @@ public class View {
 			modMember[0] = this.menuInput();
 			this.display("전화번호\t:");
 			modMember[1] = this.menuInput();
+		}else {
+			modMember=null;
 		}
 		return modMember;
 	}
@@ -418,6 +442,8 @@ public class View {
 			delMember = new String[1];
 			this.display("회원코드\t:");
 			delMember[0] = this.menuInput();
+		}else {
+			delMember=null;
 		}
 		return delMember;
 	}
@@ -601,7 +627,7 @@ public class View {
 	}
 
 	private String[][] saveMenu() {
-		String[][] menu = { { "매장관리", "매장오픈", "매장클로즈", "금일매출현황", "매출통계" },
+		String[][] menu = { { "매장관리", "매장오픈", "매장클로즈", "금월매출현황", "매출통계" },
 				{ "상품관리", "메뉴등록", "메뉴수정", "메뉴삭제", "굿즈등록", "굿즈수정", "굿즈삭제" }, { "회원관리", "회원등록", "회원수정", "회원삭제" },
 				{ "판매관리" } };
 		return menu;
