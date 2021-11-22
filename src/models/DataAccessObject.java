@@ -9,6 +9,8 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 
+import beans.DateBean;
+import beans.MemberBean;
 import beans.MenuBean;
 import beans.OrderBean;
 
@@ -30,7 +32,10 @@ public class DataAccessObject {
 			for(int colIndex=0; colIndex<list.size(); colIndex++) {
 				sb.append(list.get(colIndex).getOrderCode());
 				sb.append(","+list.get(colIndex).getGoodsCode());
+				sb.append(","+list.get(colIndex).getGoodsName());
+				sb.append(","+list.get(colIndex).getGoodsPrice());
 				sb.append(","+list.get(colIndex).getOrderQuantity());
+				sb.append(","+list.get(colIndex).getDiscountRate());
 				if(list.get(colIndex).getMemberCode()!=null){
 					sb.append(","+list.get(colIndex).getMemberCode());
 				}
@@ -48,19 +53,26 @@ public class DataAccessObject {
 		return check;
 	}
 	
-	String[][] getSalesStat(String[] month){
-		String[][] salesMonthStat = new String[this.countRecord("D:\\Class\\HEEJIN\\sample\\src\\datafile\\orders.txt", month, 0)][];
+	ArrayList<OrderBean> getSalesStat(DateBean month){
+		ArrayList<OrderBean> salesMonthStat = new ArrayList<OrderBean>();
 		
 		BufferedReader buffer = null;
 		try {
 			buffer = new BufferedReader(new FileReader(new File("D:\\Class\\HEEJIN\\sample\\src\\datafile\\orders.txt")));
 			String line;
-			int index = -1;
+			String[] order;
+			OrderBean ob;
 			while((line=buffer.readLine()) != null) {
-				if(Integer.parseInt(month[0])<=Integer.parseInt(line.substring(0,8))&&Integer.parseInt(line.substring(0,8))<=Integer.parseInt(month[1])) {
-					index++;
-					salesMonthStat[index] = line.split(",");
-				
+				if(Integer.parseInt(month.getStartDay())<=Integer.parseInt(line.substring(0,8))&&Integer.parseInt(line.substring(0,8))<=Integer.parseInt(month.getLastDay())) {			
+					order = line.split(",");
+					ob=new OrderBean();
+					ob.setOrderCode(order[0]);
+					ob.setGoodsCode(order[1]);
+					ob.setGoodsName((order[2]));
+					ob.setGoodsPrice(Integer.parseInt(order[3]));
+					ob.setOrderQuantity(Integer.parseInt(order[4]));
+					ob.setDiscountRate(Integer.parseInt(order[5]));				
+					salesMonthStat.add(ob);
 					
 				}
 			}
@@ -76,66 +88,33 @@ public class DataAccessObject {
 		return salesMonthStat;
 	}
 	
-	private int countRecord(String path, String[] condition, int colIndex) {
-		int count = 0;
-		String line=null;
-		File file = new File(path);
-		try {
-			FileReader reader = new FileReader(file);
-			BufferedReader buffer = new BufferedReader(reader);
-			//202109060918,1005,카푸치노(HOT),2700,8,0,1002  contains 202111
-			while((line=buffer.readLine()) != null) {
-				String[] record = line.split(",");
-				if(Integer.parseInt(condition[0])<=Integer.parseInt(line.substring(0,8))&&Integer.parseInt(line.substring(0,8))<=Integer.parseInt(condition[1])) {
-					count++;
-				}
-			}
-			buffer.close();
-		}catch(IOException e) {
-
-		}
-		return count;
-	}
-	
-	private int countRecord(String path, String condition, int colIndex) {
-		int count = 0;
-		String line=null;
-		File file = new File(path);
-		try {
-			FileReader reader = new FileReader(file);
-			BufferedReader buffer = new BufferedReader(reader);
-			//1001|아메리카노|2000|1|HOT|10
-			
-			while((line=buffer.readLine()) != null) {
-				String[] record=line.split(",");
-				if(record[colIndex].contains(condition)) {
-					count++;						
-				}
-			}
-			buffer.close();
-		}catch(IOException e) {}
-		return count;
-	}
-	
-	String[][] getMonthStat(String month){
+	ArrayList<OrderBean> getMonthStat(DateBean month){
 		
 		BufferedReader br=null;
-		String[][] SalesMonthStat= new String[this.countRecord("D:\\Class\\HEEJIN\\sample\\src\\datafile\\orders.txt", month, 0)][];
+		ArrayList<OrderBean> salesMonthStat= new ArrayList<OrderBean>();
+		OrderBean ob;
 		try {
 			br= new BufferedReader(new FileReader("D:\\Class\\HEEJIN\\sample\\src\\datafile\\orders.txt"));
 			String line;
-			int index=-1;
+			String[] order;
 			while((line=br.readLine())!=null) {
-				if(line.contains(month)) {
-					index++;
-					SalesMonthStat[index]=line.split(",");
+				if(line.contains(month.getToday())) {
+					order = line.split(",");
+					ob=new OrderBean();
+					ob.setOrderCode(order[0]);
+					ob.setGoodsCode(order[1]);
+					ob.setGoodsName((order[2]));
+					ob.setGoodsPrice(Integer.parseInt(order[3]));
+					ob.setOrderQuantity(Integer.parseInt(order[4]));
+					ob.setDiscountRate(Integer.parseInt(order[5]));				
+					salesMonthStat.add(ob);
 				}				
 			}
 		} catch (IOException e) {	
 			e.printStackTrace();
 		}
 		
-		return SalesMonthStat;
+		return salesMonthStat;
 	}
 	OrderBean getGoodsInfo(OrderBean ob) {
 		BufferedReader buffer=null;
@@ -282,48 +261,48 @@ public class DataAccessObject {
 		return menuList;
 	}
 
-	public String[][] getMemberList(){
+	public ArrayList<MemberBean> getMemberList(){
 		/* Service Class 요청에 따른 회원 리스트를 이차원 배열로 작성 후 리턴 */
-		String[][] memberList = new String[this.countRecord("D:\\Class\\HEEJIN\\sample\\src\\datafile\\members.txt")][];
-		File file = new File("D:\\Class\\HEEJIN\\sample\\src\\datafile\\members.txt");
-		FileReader reader = null;
+		ArrayList<MemberBean> memberList=new ArrayList<MemberBean>();
 		BufferedReader buffer = null;
 		String line;
-		int recordIndex = -1;
+		MemberBean mb=null;
 		try {
-			reader = new FileReader(file);
-			buffer = new BufferedReader(reader);
+			
+			buffer = new BufferedReader(new FileReader(new File("D:\\Class\\HEEJIN\\sample\\src\\datafile\\members.txt")));
 			while((line = buffer.readLine()) != null) {
-				recordIndex++;
+				mb= new MemberBean();
 				String[] member = line.split("\\|");
-				memberList[recordIndex] = member;
+				mb.setMemberCode(member[0]);
+				mb.setMemberName(member[1]);
+				mb.setCallNumber(member[2]);
+				memberList.add(mb);
+				
+				
 			}
+			
 		} catch (Exception e) {
-
+			e.printStackTrace();
 		} finally {
 			try {buffer.close();} catch (IOException e) {}
 		}
 		
 		return memberList;
 	}
-	
-	public boolean setMember(String[] memberInfo){
-		boolean check = false;
-		File file = new File("D:\\Class\\HEEJIN\\sample\\src\\datafile\\members.txt");
-		FileWriter writer = null;
+	//멤버 등록
+	public boolean setMember(MemberBean member){
+		boolean check = false;	
 		BufferedWriter buffer = null;
+		StringBuffer sb= new StringBuffer();
+		sb.append(member.getMemberCode());
+		sb.append("|"+member.getMemberName());
+		sb.append("|"+member.getCallNumber()+"\n");
+		
+		try {			
+			buffer = new BufferedWriter(new FileWriter(new File("D:\\Class\\HEEJIN\\sample\\src\\datafile\\members.txt"), true));
 
-		try {
-			writer = new FileWriter(file, true);
-			buffer = new BufferedWriter(writer);
-
-			for(int colIndex=0; colIndex<memberInfo.length; colIndex++) {
-				buffer.write(memberInfo[colIndex]);
-				if(colIndex != memberInfo.length-1) {
-					buffer.write("|");
-				}
-			}
-			buffer.newLine();
+			
+			buffer.write(sb.toString());
 			check = true;
 		}catch(IOException e) {
 
@@ -334,22 +313,20 @@ public class DataAccessObject {
 
 		return check;
 	}
-	public boolean setMember(String[][] memberInfo){
+	//멤버 수정, 삭제
+	public boolean setMember(ArrayList<MemberBean> memberInfo){
 		boolean check = false;
-		File file = new File("D:\\Class\\HEEJIN\\sample\\src\\datafile\\members.txt");
-		FileWriter writer = null;
 		BufferedWriter buffer = null;
 		StringBuffer sb=new StringBuffer();
+		for(int i=0;i<memberInfo.size();i++) {
+			sb.append(memberInfo.get(i).getMemberCode());
+			sb.append("|"+memberInfo.get(i).getMemberName());
+			sb.append("|"+memberInfo.get(i).getCallNumber()+"\n");		
+		}
 		try {
-			writer = new FileWriter(file);
-			buffer = new BufferedWriter(writer);
 			
-			for(int i=0;i<memberInfo.length;i++) {
-				for(int f=0;f<memberInfo[i].length;f++) {
-					sb.append(memberInfo[i][f]);
-					sb.append((f!=memberInfo[i].length-1)?"|":"\n");
-				}
-			}
+			buffer = new BufferedWriter(new FileWriter(new File("D:\\Class\\HEEJIN\\sample\\src\\datafile\\members.txt")));
+		
 			buffer.write(sb.toString());
 			check = true;
 		}catch(IOException e) {

@@ -1,24 +1,30 @@
 package models;
 
+import java.util.ArrayList;
+
+import beans.MemberBean;
+
 public class MemberManagement {
 	private DataAccessObject dao;
 	public MemberManagement() {
 
 	}
 
-	public String backController(String jobCode) {
+	public String backController(String request) {
 		String message = null;
+		String jobCode=null;
+		String[] data=null;
+		if(request.indexOf('?')!=-1) {
+			jobCode=request.substring(0,request.indexOf('?'));
+			data=request.substring(request.indexOf('?')+1).split("&");
+		}else {
+			jobCode=request;
+		}
+		
 		switch(jobCode) {
 		case "31": case "32": case "33":
 			message = this.ctlReadMember();
 			break;
-		}
-		return message;
-	}
-	
-	public String backController(String jobCode, String[] data) {
-		String message = null;
-		switch(jobCode) {
 		case "3R":
 			message = this.ctlRegMember(data);
 			break;
@@ -27,31 +33,28 @@ public class MemberManagement {
 			break;
 		case "3D":
 			message=this.ctlDegMember(data);
-			break;
+			break;	
 		}
 		return message;
 	}
 
 	private String ctlReadMember() {
+		
 		dao = new DataAccessObject();
 		return this.toStringFromArray(dao.getMemberList());
 	}
 
-	private String toStringFromArray(String[][] data) {
+	private String toStringFromArray(ArrayList<MemberBean> data) {
 		StringBuffer sb = new StringBuffer();
-
-		for(int recordIndex=0; recordIndex<data.length; recordIndex++) {
+		
+		for(int recordIndex=0; recordIndex<data.size(); recordIndex++) {
 			sb.append(" ");
-			for(int colIndex=0; colIndex<data[recordIndex].length; colIndex++) {
-				sb.append(data[recordIndex][colIndex]);
-				
-				if(colIndex != data[recordIndex].length - 1) {
-					sb.append("\t");
-					if(colIndex == 1 && data[recordIndex][colIndex].length()<6) {
-						sb.append("\t");
-					}
-				}
-			}
+			sb.append(data.get(recordIndex).getMemberCode());
+			sb.append("\t");
+			sb.append(data.get(recordIndex).getMemberName());
+			sb.append(data.get(recordIndex).getMemberName().length()<6?"\t":"");
+			sb.append("\t");
+			sb.append(data.get(recordIndex).getCallNumber());			
 			sb.append("\n");
 		}
 
@@ -63,7 +66,11 @@ public class MemberManagement {
 	private String ctlRegMember(String[] memberInfo) {
 		String message = null;
 		dao = new DataAccessObject();
-		if(dao.setMember(memberInfo)) {
+		MemberBean mb= new MemberBean();
+		mb.setMemberCode(memberInfo[0]);
+		mb.setMemberName(memberInfo[1]);
+		mb.setCallNumber(memberInfo[2]);
+		if(dao.setMember(mb)) {
 			message = this.toStringFromArray(dao.getMemberList());
 		}else {
 			message = "회원등록작업이 실패하였습니다.\n다시 등록해 주시기 바랍니다.";
@@ -75,10 +82,13 @@ public class MemberManagement {
 	/* 회원정보수정 */
 	private String ctlModMember(String[] data) {
 		dao = new DataAccessObject();
-		String[][] list=dao.getMemberList();
-		for(int i=0;i<list.length;i++) {
-			if(list[i][0].equals(data[0])){
-				list[i][2]=data[1];
+		MemberBean mb= new MemberBean();
+		mb.setMemberCode(data[0]);
+		mb.setCallNumber(data[1]);
+		ArrayList<MemberBean> list=dao.getMemberList();
+		for(int i=0;i<list.size();i++) {
+			if(list.get(i).getMemberCode().equals(mb.getMemberCode())){
+				list.get(i).setCallNumber(mb.getCallNumber());
 				break;
 			}
 		}
@@ -88,15 +98,16 @@ public class MemberManagement {
 
 	/* 회원정보삭제 */
 	private String ctlDegMember(String[] data) {
+		MemberBean mb= new MemberBean();
+		mb.setMemberCode(data[0]);
 		dao = new DataAccessObject();
 		boolean check=true;
-		String[][] list=dao.getMemberList();
-		String[][] newList=new String[list.length-1][list[0].length];
-		for(int i=0;i<list.length;i++) {
-			if(!list[i][0].equals(data[0])) {
-				newList[(check)?i:i-1]=list[i];
-			}else {check=false;}
+		ArrayList<MemberBean> list=dao.getMemberList();
+		for(int i=0;i<list.size();i++) {
+			if(list.get(i).getMemberCode().equals(mb.getMemberCode())) {
+				list.remove(i);
+			}
 		}
-		 return (dao.setMember(newList))?this.toStringFromArray(dao.getMemberList()):"회원삭제에 실패하였습니다. 다시 입력해주세요.";
+		 return (dao.setMember(list))?this.toStringFromArray(dao.getMemberList()):"회원삭제에 실패하였습니다. 다시 입력해주세요.";
 	}
 }
